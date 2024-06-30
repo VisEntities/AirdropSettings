@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Oxide.Plugins
 {
     [Info("Airdrop Settings", "VisEntities", "1.0.0")]
-    [Description(" ")]
+    [Description("Allows customization of airdrops and cargo planes.")]
     public class AirdropSettings : RustPlugin
     {
         #region Fields
@@ -85,7 +85,8 @@ namespace Oxide.Plugins
                 CargoPlaneSpawnHeight = 250,
                 CargoPlaneSpeedLevel = SpeedLevel.Normal,
                 InstantDropWithoutPlane = false,
-                AirdropFallSpeedLevel = SpeedLevel.Normal
+                AirdropFallSpeedLevel = SpeedLevel.Normal,
+                RemoveAirdropParachute = false
             };
         }
 
@@ -165,7 +166,7 @@ namespace Oxide.Plugins
                 if (_config.RemoveAirdropParachute)
                 {
                     supplyDrop.RemoveParachute();
-                    rigidbody.drag = 0.4f; // To simulate free fall without parachute.
+                    rigidbody.drag = 0.5f; // To simulate free fall without parachute.
                 }
                 else
                 {
@@ -208,7 +209,7 @@ namespace Oxide.Plugins
 
         private float GetAirdropFallSpeed(SpeedLevel speedLevel)
         {
-            // Drag value must be at least 0.4f to prevent airdrops from falling through terrain.
+            // Drag value must be at least 0.5f to prevent airdrops from falling through terrain.
             switch (speedLevel)
             {
                 case SpeedLevel.VerySlow:
@@ -220,7 +221,7 @@ namespace Oxide.Plugins
                 case SpeedLevel.Fast:
                     return 1f;
                 case SpeedLevel.VeryFast:
-                    return 0.4f;
+                    return 0.5f;
                 default:
                     return 3f;
             }
