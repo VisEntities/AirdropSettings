@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Airdrop Settings", "VisEntities", "1.1.0")]
+    [Info("Airdrop Settings", "VisEntities", "1.2.0")]
     [Description("Allows customization of airdrops and cargo planes.")]
     public class AirdropSettings : RustPlugin
     {
@@ -48,6 +48,9 @@ namespace Oxide.Plugins
 
             [JsonProperty("Supply Signal Smoke Duration Seconds")]
             public float SupplySignalSmokeDurationSeconds { get; set; }
+
+            [JsonProperty("Airdrop Despawn Time Seconds")]
+            public float AirdropDespawnTimeSeconds { get; set; }
         }
 
         protected override void LoadConfig()
@@ -86,6 +89,11 @@ namespace Oxide.Plugins
                 _config.SupplySignalSmokeDurationSeconds = defaultConfig.SupplySignalSmokeDurationSeconds;
             }
 
+            if (string.Compare(_config.Version, "1.2.0") < 0)
+            {
+                _config.AirdropDespawnTimeSeconds = defaultConfig.AirdropDespawnTimeSeconds;
+            }
+
             PrintWarning("Config update complete! Updated from version " + _config.Version + " to " + Version.ToString());
             _config.Version = Version.ToString();
         }
@@ -101,7 +109,8 @@ namespace Oxide.Plugins
                 AirdropFallSpeedLevel = SpeedLevel.Normal,
                 RemoveAirdropParachute = false,
                 DropAirdropExactlyAtSupplySignalPosition = false,
-                SupplySignalSmokeDurationSeconds = 210f
+                SupplySignalSmokeDurationSeconds = 210f,
+                AirdropDespawnTimeSeconds = 0
             };
         }
 
@@ -175,6 +184,10 @@ namespace Oxide.Plugins
         {
             if (supplyDrop == null)
                 return;
+
+            float despawnTime = _config.AirdropDespawnTimeSeconds;
+            if (despawnTime > 0)
+                supplyDrop.Invoke(new Action(supplyDrop.RemoveMe), despawnTime);
 
             Rigidbody rigidbody = supplyDrop.GetComponent<Rigidbody>();
             if (rigidbody != null)
