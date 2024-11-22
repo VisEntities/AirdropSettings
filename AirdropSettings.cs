@@ -1,4 +1,10 @@
-﻿using HarmonyLib;
+﻿/*
+ * Copyright (C) 2024 Game4Freak.io
+ * This mod is provided under the Game4Freak EULA.
+ * Full legal terms can be found at https://game4freak.io/eula/
+ */
+
+using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core;
@@ -7,7 +13,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Airdrop Settings", "VisEntities", "1.2.0")]
+    [Info("Airdrop Settings", "VisEntities", "1.3.0")]
     [Description("Allows customization of airdrops and cargo planes.")]
     public class AirdropSettings : RustPlugin
     {
@@ -134,6 +140,9 @@ namespace Oxide.Plugins
 
         private object OnCargoPlaneUpdateDropPosition(CargoPlane cargoPlane, Vector3 newDropPosition)
         {
+            if (!CanAlterCargoPlane(cargoPlane))
+                return null;
+
             float x = TerrainMeta.Size.x;
             float y = TerrainMeta.HighestPoint.y + _config.CargoPlaneSpawnHeight;
             cargoPlane.startPos = Vector3Ex.Range(-1f, 1f);
@@ -157,6 +166,9 @@ namespace Oxide.Plugins
 
         private void OnAirdrop(CargoPlane cargoPlane, Vector3 dropPosition)
         {
+            if (!CanAlterCargoPlane(cargoPlane))
+                return;
+
             if (_config.InstantDropWithoutPlane)
             {
                 // Adjust the drop position height to simulate the altitude from which the cargo plane would drop the airdrop.
@@ -185,6 +197,9 @@ namespace Oxide.Plugins
             if (supplyDrop == null)
                 return;
 
+            if (!CanAlterSupplyDrop(supplyDrop))
+                return;
+
             float despawnTime = _config.AirdropDespawnTimeSeconds;
             if (despawnTime > 0)
                 supplyDrop.Invoke(new Action(supplyDrop.RemoveMe), despawnTime);
@@ -206,6 +221,9 @@ namespace Oxide.Plugins
 
         private object OnSupplySignalExplode(SupplySignal supplySignal)
         {
+            if (!CanAlterSupplySignal(supplySignal))
+                return null;
+
             CargoPlane cargoPlane = GameManager.server.CreateEntity(supplySignal.EntityToCreate.resourcePath, supplySignal.transform.position, Quaternion.identity) as CargoPlane;
             if (cargoPlane != null)
             {
@@ -283,6 +301,28 @@ namespace Oxide.Plugins
         }
 
         #endregion Cargo Plane and Airdrop Speed
+
+        #region Exposed Hooks
+
+        private static bool CanAlterSupplyDrop(SupplyDrop supplyDrop)
+        {
+            object hookResult = Interface.CallHook("OnSupplyDropSettingsChange", supplyDrop);
+            return !(hookResult is bool && (bool)hookResult == false);
+        }
+
+        private static bool CanAlterCargoPlane(CargoPlane cargoPlane)
+        {
+            object hookResult = Interface.CallHook("OnCargoPlaneSettingsChange", cargoPlane);
+            return !(hookResult is bool && (bool)hookResult == false);
+        }
+
+        private static bool CanAlterSupplySignal(SupplySignal supplySignal)
+        {
+            object hookResult = Interface.CallHook("OnSupplySignalSettingsChange", supplySignal);
+            return !(hookResult is bool && (bool)hookResult == false);
+        }
+
+        #endregion Exposed Hooks
 
         #region Harmony Patches
 
