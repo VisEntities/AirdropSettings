@@ -8,12 +8,13 @@ using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core;
+using Oxide.Core.Plugins;
 using System;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Airdrop Settings", "VisEntities", "1.3.0")]
+    [Info("Airdrop Settings", "VisEntities", "1.3.1")]
     [Description("Allows customization of airdrops and cargo planes.")]
     public class AirdropSettings : RustPlugin
     {
@@ -21,7 +22,6 @@ namespace Oxide.Plugins
 
         private static AirdropSettings _plugin;
         private static Configuration _config;
-        private Harmony _harmony;
 
         #endregion Fields
 
@@ -127,13 +127,10 @@ namespace Oxide.Plugins
         private void Init()
         {
             _plugin = this;
-            _harmony = new Harmony(Name + "PATCH");
-            _harmony.PatchAll();
         }
 
         private void Unload()
         {
-            _harmony.UnpatchAll(Name + "PATCH");
             _config = null;
             _plugin = null;
         }
@@ -326,6 +323,7 @@ namespace Oxide.Plugins
 
         #region Harmony Patches
 
+        [AutoPatch]
         [HarmonyPatch(typeof(CargoPlane), "UpdateDropPosition")]
         public static class CargoPlane_UpdateDropPosition_Patch
         {
@@ -341,6 +339,7 @@ namespace Oxide.Plugins
             }
         }
 
+        [AutoPatch]
         [HarmonyPatch(typeof(SupplySignal), "Explode")]
         public static class SupplySignal_Explode_Patch
         {
